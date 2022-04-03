@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 
+# device ID is 0 (default) for iam-camilo
 cap = cv2.VideoCapture(0)
 
 while cap.isOpened():
