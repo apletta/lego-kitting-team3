@@ -1,25 +1,32 @@
 import numpy as np
 import cv2 as cv
+import matplotlib.pyplot as plt
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # load image 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-img = cv.imread('Webcam_screenshot1_03.04.2022.png')
+img = cv.imread('Webcam_screenshot_03.04.2022.png')
+# img = cv.imread('Webcam_screenshot1_03.04.2022.png')
+# img = cv.imread('Webcam_screenshot2_03.04.2022.png')
+# img = cv.imread('Webcam_screenshot3_03.04.2022.png')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # roughly crop image 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # TODO: fix crop box, and mark out workspace on board,
-img = img[0:420,330:800,:]
+img = img[0:420,330:800,:] # BGR
 
-# TODO: tune filter parameters on camera
-lower_blue = np.array([70, 0, 0])
-upper_blue = np.array([255, 100, 100])
-mask_blue = cv.inRange(img, lower_blue, upper_blue)
-
-# lower_red = np.array([100, 0, 0])
-# upper_red = np.array([255, 100, 100])
-# mask_red = cv.inRange(img, lower_red, upper_red)
+# Normalize image
+img_mag = np.linalg.norm(img, axis=2)
+img_norm = np.zeros(img.shape)
+for i in range(img.shape[0]):
+    for j in range(img.shape[1]):
+        img_norm[i,j] = img[i,j] / img_mag[i,j]
+# Thresholding and masking
+blue_thresh = 0.8
+red_thresh = 0.8
+blue_mask = img_norm[:,:,0] > blue_thresh
+red_mask = img_norm[:,:,2] > red_thresh
 
 # TODO: EROSION NOISE FILTERING
 
@@ -65,7 +72,6 @@ mask_blue = cv.inRange(img, lower_blue, upper_blue)
 
 
 # cv.imshow('test',img)
-cv.imshow('test',mask_blue)
 # cv.imshow('test',imgKeyPoints)
 cv.waitKey(0)
 cv.destroyAllWindows()
