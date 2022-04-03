@@ -38,6 +38,8 @@ kernel = np.ones((3,3),np.uint8)
 blue_mask = cv.morphologyEx(blue_mask, cv.MORPH_CLOSE, kernel)
 # open image 
 blue_mask = cv.morphologyEx(blue_mask, cv.MORPH_OPEN, kernel)
+# Get contours
+contours, hierarchy = cv.findContours(image=blue_mask, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_SIMPLE)
 
 # print(np.max(blue_mask))
 
@@ -49,9 +51,11 @@ blue_mask = cv.morphologyEx(blue_mask, cv.MORPH_OPEN, kernel)
 params = cv.SimpleBlobDetector_Params()
 
 # # Change thresholds
-params.minThreshold = 254
+params.filterByColor = 1
+params.minThreshold = 250
 params.maxThreshold = 256
-params.thresholdStep = 0.1
+params.thresholdStep = 1
+params.blobColor = 255
 # # # # Filter by Area.
 # # # params.filterByArea = True
 # # # params.minArea = 1500
