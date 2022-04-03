@@ -25,56 +25,66 @@ for i in range(img.shape[0]):
 # Thresholding and masking
 blue_thresh = 0.8
 red_thresh = 0.8
-blue_mask = img_norm[:,:,0] > blue_thresh
-red_mask = img_norm[:,:,2] > red_thresh
+blue_mask = ((img_norm[:,:,0] > blue_thresh)*255).astype('uint8')
+red_mask = ((img_norm[:,:,2] > red_thresh)*255).astype('uint8')
+
+# mask_img = cv.cvtColor(blue_mask,blue_mask,cv.COLOR_GRAY2BGR)
+# blue_mask = blue_mask.astype('uint8')
 
 # TODO: EROSION NOISE FILTERING
+# set kernel 
+kernel = np.ones((3,3),np.uint8)
+# closes small patches
+blue_mask = cv.morphologyEx(blue_mask, cv.MORPH_CLOSE, kernel)
+# open image 
+blue_mask = cv.morphologyEx(blue_mask, cv.MORPH_OPEN, kernel)
 
-# blob filtering for masked images, this returns locations in x/y for image 
+# print(np.max(blue_mask))
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# set parameters for blob detection 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# params = cv.SimpleBlobDetector_Params()
+# print(blue_mask)
+
+# # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# # set parameters for blob detection 
+# # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+params = cv.SimpleBlobDetector_Params()
 
 # # Change thresholds
-# params.minThreshold = 1
-# params.maxThreshold = 255
+params.minThreshold = 254
+params.maxThreshold = 256
+params.thresholdStep = 0.1
+# # # # Filter by Area.
+# # # params.filterByArea = True
+# # # params.minArea = 1500
 
-# # # Filter by Area.
-# # params.filterByArea = True
-# # params.minArea = 1500
+# # # # Filter by Circularity
+# # # params.filterByCircularity = True
+# # # params.minCircularity = 0.1
 
-# # # Filter by Circularity
-# # params.filterByCircularity = True
-# # params.minCircularity = 0.1
+# # # # Filter by Convexity
+# # # params.filterByConvexity = True
+# # # params.minConvexity = 0.87
 
-# # # Filter by Convexity
-# # params.filterByConvexity = True
-# # params.minConvexity = 0.87
-
-# # # Filter by Inertia
-# # params.filterByInertia = True
-# # params.minInertiaRatio = 0.01
+# # # # Filter by Inertia
+# # # params.filterByInertia = True
+# # # params.minInertiaRatio = 0.01
 
 
-# # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# # create detector
-# # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# detector = cv.SimpleBlobDetector_create(params)
+# # # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# # # create detector
+# # # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+detector = cv.SimpleBlobDetector_create(params)
 # detector = cv.SimpleBlobDetector_create()
 
-# keypoints = detector.detect(img)
+keypoints = detector.detect(blue_mask)
 
-# print(keypoints)
+print(keypoints)
 
-# imgKeyPoints = cv.drawKeypoints(img, keypoints, np.array([]), (0,0,255), cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+# imgKeyPoints = cv.drawKeypoints(blue_mask, keypoints, np.array([]), (0,0,255), cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
-
-# cv.imshow('test',img)
+# cv.imshow('test',blue_mask)
 # cv.imshow('test',imgKeyPoints)
-cv.waitKey(0)
-cv.destroyAllWindows()
+# cv.waitKey(0)
+# cv.destroyAllWindows()
 
 
 
