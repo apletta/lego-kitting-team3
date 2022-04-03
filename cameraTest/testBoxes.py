@@ -1,6 +1,8 @@
 import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
+from Block import *
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # load image 
@@ -16,81 +18,82 @@ img = cv.imread('Webcam_screenshot_03.04.2022.png')
 # TODO: fix crop box, and mark out workspace on board,
 img = img[0:420,330:800,:] # BGR
 
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# color filter and create block masks 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Normalize image
 img_mag = np.linalg.norm(img, axis=2)
 img_norm = np.zeros(img.shape)
 for i in range(img.shape[0]):
     for j in range(img.shape[1]):
         img_norm[i,j] = img[i,j] / img_mag[i,j]
+
 # Thresholding and masking
 blue_thresh = 0.8
 red_thresh = 0.8
 blue_mask = ((img_norm[:,:,0] > blue_thresh)*255).astype('uint8')
 red_mask = ((img_norm[:,:,2] > red_thresh)*255).astype('uint8')
 
-# mask_img = cv.cvtColor(blue_mask,blue_mask,cv.COLOR_GRAY2BGR)
-# blue_mask = blue_mask.astype('uint8')
 
-# TODO: EROSION NOISE FILTERING
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# clean up
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 # set kernel 
 kernel = np.ones((3,3),np.uint8)
+
 # closes small patches
 blue_mask = cv.morphologyEx(blue_mask, cv.MORPH_CLOSE, kernel)
+red_mask = cv.morphologyEx(red_mask, cv.MORPH_CLOSE, kernel)
+
 # open image 
 blue_mask = cv.morphologyEx(blue_mask, cv.MORPH_OPEN, kernel)
+red_mask = cv.morphologyEx(red_mask, cv.MORPH_OPEN, kernel)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Get contours
-contours, hierarchy = cv.findContours(image=blue_mask, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_SIMPLE)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+contours_blue, _ = cv.findContours(image=blue_mask, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_SIMPLE)
 
-# print(np.max(blue_mask))
+contours_red, _ = cv.findContours(image=red_mask, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_SIMPLE)
 
-# print(blue_mask)
+rects_blue = []
 
-# # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# # set parameters for blob detection 
-# # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-params = cv.SimpleBlobDetector_Params()
+for i in range(len(contours_blue)):
 
-# # Change thresholds
-params.filterByColor = 1
-params.minThreshold = 250
-params.maxThreshold = 256
-params.thresholdStep = 1
-params.blobColor = 255
-# # # # Filter by Area.
-# # # params.filterByArea = True
-# # # params.minArea = 1500
+    loc,dims,ang = cv.minAreaRect(contours_blue[i])
 
-# # # # Filter by Circularity
-# # # params.filterByCircularity = True
-# # # params.minCircularity = 0.1
+    # TODO: GET PROJECTION MATRIX AND CONVERT TO X,Y IN ROBOT FRAME
 
-# # # # Filter by Convexity
-# # # params.filterByConvexity = True
-# # # params.minConvexity = 0.87
+    # TODO: fgure out angle of ang from minAreaRect
 
-# # # # Filter by Inertia
-# # # params.filterByInertia = True
-# # # params.minInertiaRatio = 0.01
+    # TODO: MAKE SURE THAT LENGTH AND WIDTH ARE ASSIGNED PROPERLY WITHIN CONSTRUCTOR
+
+    cur_block = Block(loc[0],loc[1],dims[0],dims[1],ang,'blue')
+
+    rects_blue.append(cur_block)
+
+# sort based on x coordinate of centroid
+rects_blue.sort(key=lambda cur: cur.x)
 
 
-# # # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# # # create detector
-# # # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-detector = cv.SimpleBlobDetector_create(params)
-# detector = cv.SimpleBlobDetector_create()
-
-keypoints = detector.detect(blue_mask)
-
-print(keypoints)
-
-# imgKeyPoints = cv.drawKeypoints(blue_mask, keypoints, np.array([]), (0,0,255), cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+# image_copy = blue_mask.copy()
+# image_copy = cv.cvtColor(image_copy,cv.COLOR_GRAY2BGR)
+# cv.drawContours(image=image_copy, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=2, lineType=cv.LINE_AA)
+# # see the results
+# cv.imshow('None approximation', image_copy)
+# cv.waitKey(0)
+# cv.imwrite('contours_none_image1.jpg', image_copy)
+# cv.destroyAllWindows()
 
 # cv.imshow('test',blue_mask)
 # cv.imshow('test',imgKeyPoints)
 # cv.waitKey(0)
 # cv.destroyAllWindows()
 
-
-
 # take locations u,v in image frame and convert these to the x,y,z frame for robot using projection matrix 
 # create matrix of, row stucture: x,y,z,color 
+
+
+
