@@ -10,8 +10,8 @@ def view_axes(img, blocks):
     for block in blocks_blue:
         print("{} block: ({},{}); {} x {}; {} rad, {} deg".format(block.color, block.x, block.y, block.length, block.width, block.angle, block.angle*180/np.pi))
         len = 15
-        dx1,dx2 = len*np.cos(block.angle), len*np.cos(block.angle+np.pi/2)
-        dy1,dy2 = len*np.sin(block.angle), len*np.sin(block.angle+np.pi/2)
+        dx1,dx2 = len*np.cos(block.angle), len*np.cos(block.angle-np.pi/2)
+        dy1,dy2 = len*np.sin(block.angle), len*np.sin(block.angle-np.pi/2)
         plt.arrow(block.x,block.y,dx1,dy1,color='green')
         plt.arrow(block.x,block.y,dx2,dy2,color='pink')
     plt.show()
