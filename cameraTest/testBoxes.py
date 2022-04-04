@@ -12,6 +12,19 @@ img = cv.imread('Webcam_screenshot_03.04.2022.png')
 # img = cv.imread('Webcam_screenshot2_03.04.2022.png')
 # img = cv.imread('Webcam_screenshot3_03.04.2022.png')
 
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# projection matrix of azure kinect 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+P = np.asarray([
+    [1,2,3,4],
+    [5,6,7,8],
+    [9,10,11,12]])
+
+print(P)
+print(np.shape(P))
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # roughly crop image 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,6 +64,7 @@ red_mask = cv.morphologyEx(red_mask, cv.MORPH_CLOSE, kernel)
 blue_mask = cv.morphologyEx(blue_mask, cv.MORPH_OPEN, kernel)
 red_mask = cv.morphologyEx(red_mask, cv.MORPH_OPEN, kernel)
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Get contours
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,19 +78,30 @@ for i in range(len(contours_blue)):
 
     loc,dims,ang = cv.minAreaRect(contours_blue[i])
 
-    # TODO: GET PROJECTION MATRIX AND CONVERT TO X,Y IN ROBOT FRAME
+    # GET PROJECTION MATRIX AND CONVERT TO X,Y IN ROBOT FRAME
+    UVH = np.asarray([loc[0],loc[1],1])
+
+    XYZH = np.linalg.pinv(P)@UVH
+
+    X = XYZH[0]/XYZH[-1]
+    Y = XYZH[1]/XYZH[-1]
 
     # TODO: fgure out angle of ang from minAreaRect
 
     # TODO: MAKE SURE THAT LENGTH AND WIDTH ARE ASSIGNED PROPERLY WITHIN CONSTRUCTOR
 
-    cur_block = Block(loc[0],loc[1],dims[0],dims[1],ang,'blue')
+    cur_block = Block(X,Y,dims[0],dims[1],ang,'blue')
 
     rects_blue.append(cur_block)
 
 # sort based on x coordinate of centroid
 rects_blue.sort(key=lambda cur: cur.x)
 
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Display 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # image_copy = blue_mask.copy()
 # image_copy = cv.cvtColor(image_copy,cv.COLOR_GRAY2BGR)
