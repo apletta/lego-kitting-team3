@@ -3,15 +3,14 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 from Block import *
 
-def get_block_locs(img, P):
+def get_block_locs(img):
     """
-    THIS FUNCTION TAKES AN IMAGE AND RETURNS BLOCK LOCATIONS AND ORIENTATIONS IN THE CAMERA FRAME, 
+    THIS FUNCTION TAKES AN IMAGE AND RETURNS BLOCK LOCATIONS AND ORIENTATIONS IN THE camera sensor FRAME, 
     THIS CURRENTLY WORKS FOR RED AND BLUE BLOCKS ONLY, IMAGE CROPPING IS HARD CODED
 
 
-    INPUTS: img, P
+    INPUTS: img
     img: image, preferably cv.imread BGR
-    P: projection matrix of camera, preferably a numpy array 3x4 of calibrated image
 
     OUTPUTS:
     blocks_red, blocks_blue
@@ -81,15 +80,15 @@ def get_block_locs(img, P):
             length = len2
             width = len1
 
-        # GET PROJECTION MATRIX AND CONVERT TO X,Y in camera frame
-        UVH = np.asarray([center[0],center[1],1])
+        # # GET PROJECTION MATRIX AND CONVERT TO X,Y in camera frame
+        # UVH = np.asarray([center[0],center[1],1])
 
-        XYZH = np.linalg.pinv(P)@UVH
+        # XYZH = np.linalg.pinv(P)@UVH
 
-        X = XYZH[0]/XYZH[-1]
-        Y = XYZH[1]/XYZH[-1]
+        # X = XYZH[0]/XYZH[-1]
+        # Y = XYZH[1]/XYZH[-1]
 
-        cur_block = Block(X,Y,length,width,ang,'blue')
+        cur_block = Block(center[0],center[1],length,width,ang,'blue')
 
         blocks_blue.append(cur_block)
 
@@ -117,17 +116,16 @@ def get_block_locs(img, P):
             length = len2
             width = len1
 
-        # GET PROJECTION MATRIX AND CONVERT TO X,Y IN camera frame 
-        UVH = np.asarray([center[0],center[1],1])
+        # # GET PROJECTION MATRIX AND CONVERT TO X,Y IN camera frame 
+        # UVH = np.asarray([center[0],center[1],1])
 
-        XYZH = np.linalg.pinv(P)@UVH
+        # XYZH = np.linalg.pinv(P)@UVH
 
-        X = XYZH[0]/XYZH[-1]
-        Y = XYZH[1]/XYZH[-1]
+        # X = XYZH[0]/XYZH[-1]
+        # Y = XYZH[1]/XYZH[-1]
 
-        cur_block = Block(X,Y,length,width,ang,'red')
+        cur_block = Block(center[0],center[1],length,width,ang,'red')
 
         blocks_red.append(cur_block)
 
     return blocks_red, blocks_blue
-    

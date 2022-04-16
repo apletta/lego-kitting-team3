@@ -13,7 +13,7 @@ P = np.asarray([
     [5,6,7,8],
     [9,10,11,12]])
 
-blocks_red, blocks_blue = get_block_locs(frame, P)
+blocks_red, blocks_blue = get_block_locs(frame)
 
 print("blocks_red")
 print('')
