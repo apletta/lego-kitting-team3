@@ -119,7 +119,9 @@ for i in range(len(contours_blue)):
         ang = np.arctan2(pts[3,1]-pts[0,1], pts[3,0]-pts[0,0])
         length = len2
         width = len1
-
+    # Convert length and width from pixels to mm
+    length = length * 31.75/23.703780087557707
+    width = width * 15.78/11.904320109974254
     # GET PROJECTION MATRIX AND CONVERT TO X,Y IN ROBOT FRAME
     UVH = np.asarray([center[0],center[1],1])
 
@@ -128,7 +130,7 @@ for i in range(len(contours_blue)):
     X = XYZH[0]/XYZH[-1]
     Y = XYZH[1]/XYZH[-1]
 
-    cur_block = Block(center[0],center[1],length,width,ang,'blue')
+    cur_block = Block(X,Y,length,width,ang,'blue')
 
     blocks_blue.append(cur_block)
 
@@ -150,6 +152,8 @@ for i in range(len(contours_red)):
         ang = np.arctan2(pts[3,1]-pts[0,1], pts[3,0]-pts[0,0])
         length = len2
         width = len1
+    length = length * 31.75/23.703780087557707
+    width = width * 15.78/11.904320109974254
 
     # GET PROJECTION MATRIX AND CONVERT TO X,Y IN ROBOT FRAME
     UVH = np.asarray([center[0],center[1],1])
@@ -159,12 +163,12 @@ for i in range(len(contours_red)):
     X = XYZH[0]/XYZH[-1]
     Y = XYZH[1]/XYZH[-1]
 
-    cur_block = Block(center[0],center[1],length,width,ang,'red')
+    cur_block = Block(X,Y,length,width,ang,'red')
 
     blocks_red.append(cur_block)
 
 # sort based on x coordinate of centroid
-# blocks_blue.sort(key=lambda cur: cur.x)
-# blocks_red.sort(key=lambda cur: cur.x)
-# view_axes(img, blocks_blue)
-# view_axes(img, blocks_red)
+blocks_blue.sort(key=lambda cur: cur.x)
+blocks_red.sort(key=lambda cur: cur.x)
+view_axes(img, blocks_blue)
+view_axes(img, blocks_red)
