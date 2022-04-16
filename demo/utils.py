@@ -73,15 +73,14 @@ def get_object_center_point_in_world(object_image_center_x, object_image_center_
     
     object_center = Point(np.array([object_image_center_x, object_image_center_y]), 'azure_kinect_overhead')
     object_depth = depth_image[object_image_center_y, object_image_center_x] * 0.001
-    print(depth_image[object_image_center_y-1:object_image_center_y+2, object_image_center_x-1:object_image_center_x+2])
+    # print(depth_image[object_image_center_y-1:object_image_center_y+2, object_image_center_x-1:object_image_center_x+2])
     if object_depth < 0.001:
         object_depth = np.max(depth_image[object_image_center_y-2:object_image_center_y+3, object_image_center_x-2:object_image_center_x+3]) * 0.001
-    print("x, y, z: ({:.4f}, {:.4f}, {:.4f})".format(
-        object_image_center_x, object_image_center_y, object_depth))
+    # print("x, y, z: ({:.4f}, {:.4f}, {:.4f})".format(object_image_center_x, object_image_center_y, object_depth))
     
     # TODO: depth might be zero
     object_center_point_in_world = transform * intrinsics.deproject_pixel(object_depth, object_center)    
-    print(object_center_point_in_world)
+    # print(object_center_point_in_world)
 
     return object_center_point_in_world 
 

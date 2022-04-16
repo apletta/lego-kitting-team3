@@ -24,9 +24,16 @@ while cap.isOpened():
 
     cv2.imshow('Webcam',frame)
     blocks_red, blocks_blue = get_block_locs(frame)
+    print("===\n===")
+    # view_axes(frame, blocks_red)
+    # view_axes(frame, blocks_blue)
+    print("RED\n-------")
+    for block in blocks_red:
+        print("{} block: ({},{}); {} x {}; {} rad, {} deg".format(block.color, block.x, block.y, block.length, block.width, block.angle, block.angle*180/np.pi))
+    print("BLUE\n-------")
+    for block in blocks_blue:
+        print("{} block: ({},{}); {} x {}; {} rad, {} deg".format(block.color, block.x, block.y, block.length, block.width, block.angle, block.angle*180/np.pi))
 
-    view_axes(frame, blocks_red)
-    view_axes(frame, blocks_blue)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
