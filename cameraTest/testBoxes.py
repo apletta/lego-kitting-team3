@@ -4,6 +4,11 @@ import matplotlib.pyplot as plt
 from Block import *
 
 
+# TODO:
+# 1 CONVERT TO FUNCTION SUCH THAT WE CAN PROVIDE AN IMAGE AS INPUT, WITH THE STRUCT AS OUTPUT
+# 2 FINISH UP TRANSFORMS
+# 3 build out red after blue is done.
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # load image 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -23,6 +28,15 @@ P = np.asarray([
 
 print(P)
 print(np.shape(P))
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# base_link to camera
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tf_camera_frame = np.asarray([
+    [0,0,0,0],
+    [0,0,0,0],
+    [0,0,0,0],
+    [0,0,0,1]])
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -88,7 +102,7 @@ for i in range(len(contours_blue)):
 
     # TODO: fgure out angle of ang from minAreaRect
 
-    # TODO: MAKE SURE THAT LENGTH AND WIDTH ARE ASSIGNED PROPERLY WITHIN CONSTRUCTOR
+    
 
     cur_block = Block(X,Y,dims[0],dims[1],ang,'blue')
 
