@@ -99,6 +99,7 @@ contours_blue, _ = cv.findContours(image=blue_mask, mode=cv.RETR_TREE, method=cv
 contours_red, _ = cv.findContours(image=red_mask, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_SIMPLE)
 
 blocks_blue = []
+blocks_red = []
 
 for i in range(len(contours_blue)):
     # Convert contour into minimum area rectangle
@@ -127,41 +128,43 @@ for i in range(len(contours_blue)):
     X = XYZH[0]/XYZH[-1]
     Y = XYZH[1]/XYZH[-1]
 
-    
-
-    # TODO: fgure out angle of ang from minAreaRect
-
-    
-
-    cur_block = Block(X,Y,length,width,ang,'blue')
+    cur_block = Block(center[0],center[1],length,width,ang,'blue')
 
     blocks_blue.append(cur_block)
 
+for i in range(len(contours_red)):
+    # Convert contour into minimum area rectangle
+    rect = cv.minAreaRect(contours_red[i])
+    # Convert minimum area rectangle into four points
+    pts = cv.boxPoints(rect)
+    # Compute length of two edges connecting to first point
+    len1 = np.linalg.norm(pts[1]-pts[0])
+    len2 = np.linalg.norm(pts[3]-pts[0])
+    # Use longer edge to determine angle
+    center = np.mean(pts,axis=0)
+    if(len1 > len2):
+        ang = np.arctan2(pts[1,1]-pts[0,1], pts[1,0]-pts[0,0])
+        length = len1
+        width = len2
+    else:
+        ang = np.arctan2(pts[3,1]-pts[0,1], pts[3,0]-pts[0,0])
+        length = len2
+        width = len1
+
+    # GET PROJECTION MATRIX AND CONVERT TO X,Y IN ROBOT FRAME
+    UVH = np.asarray([center[0],center[1],1])
+
+    XYZH = np.linalg.pinv(P)@UVH
+
+    X = XYZH[0]/XYZH[-1]
+    Y = XYZH[1]/XYZH[-1]
+
+    cur_block = Block(center[0],center[1],length,width,ang,'red')
+
+    blocks_red.append(cur_block)
+
 # sort based on x coordinate of centroid
-blocks_blue.sort(key=lambda cur: cur.x)
-view_axes(img, blocks_blue)
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Display 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# image_copy = blue_mask.copy()
-# image_copy = cv.cvtColor(image_copy,cv.COLOR_GRAY2BGR)
-# cv.drawContours(image=image_copy, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=2, lineType=cv.LINE_AA)
-# # see the results
-# cv.imshow('None approximation', image_copy)
-# cv.waitKey(0)
-# cv.imwrite('contours_none_image1.jpg', image_copy)
-# cv.destroyAllWindows()
-
-# cv.imshow('test',blue_mask)
-# cv.imshow('test',imgKeyPoints)
-# cv.waitKey(0)
-# cv.destroyAllWindows()
-
-# take locations u,v in image frame and convert these to the x,y,z frame for robot using projection matrix 
-# create matrix of, row stucture: x,y,z,color 
-
-
-
+# blocks_blue.sort(key=lambda cur: cur.x)
+# blocks_red.sort(key=lambda cur: cur.x)
+# view_axes(img, blocks_blue)
+view_axes(img, blocks_red)
