@@ -4,6 +4,24 @@ import matplotlib.pyplot as plt
 from Block import *
 
 def get_block_locs(img, P):
+    """
+    THIS FUNCTION TAKES AN IMAGE AND RETURNS BLOCK LOCATIONS AND ORIENTATIONS IN THE CAMERA FRAME, 
+    THIS CURRENTLY WORKS FOR RED AND BLUE BLOCKS ONLY, IMAGE CROPPING IS HARD CODED
+
+
+    INPUTS: img, P
+    img: image, preferably cv.imread BGR
+    P: projection matrix of camera, preferably a numpy array 3x4 of calibrated image
+
+    OUTPUTS:
+    blocks_red, blocks_blue
+    blocks_red: sorted list of red blocks with attributes
+    blocks_blue: sorted list of blue blocks with attributes    
+
+    SEE Block.py for more info on attributes.
+    """
+
+
     # crop image
     img = img[0:420,330:800,:] # BGR
 
@@ -90,7 +108,7 @@ def get_block_locs(img, P):
 
         # Use longer edge to determine angle
         center = np.mean(pts,axis=0)
-        
+
         if(len1 > len2):
             ang = np.arctan2(pts[1,1]-pts[0,1], pts[1,0]-pts[0,0])
             length = len1

@@ -3,11 +3,11 @@ import numpy
 
 class Block:
     """"
-    x: CENTROID OF X POSITION IN BASE_LINK
-    y: CENTROID OF Y POSITION IN BASE_LINK
-    length: TO BE DESTROYED
-    width: TO BE DESTORYED
-    angle: TO BE DETERMINED 
+    x: CENTROID OF X POSITION IN BASE_LINK {m}
+    y: CENTROID OF Y POSITION IN BASE_LINK {m}
+    length: defined as dimension which is greater than width {m}
+    width: defined as dimensions which is shorter than length {m}
+    angle: angle of length of block measured from the x "axis" in the camera frame {rad}
     color: STRING OF "BLUE" OR "RED"
     
     """
