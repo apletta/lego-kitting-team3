@@ -7,7 +7,7 @@ def view_axes(img, blocks):
     # img: BGR image
     # blocks: list of blocks
     plt.imshow(img[:,:,::-1])
-    for block in blocks_blue:
+    for block in blocks:
         print("{} block: ({},{}); {} x {}; {} rad, {} deg".format(block.color, block.x, block.y, block.length, block.width, block.angle, block.angle*180/np.pi))
         len = 15
         dx1,dx2 = len*np.cos(block.angle), len*np.cos(block.angle-np.pi/2)
@@ -167,4 +167,4 @@ for i in range(len(contours_red)):
 # blocks_blue.sort(key=lambda cur: cur.x)
 # blocks_red.sort(key=lambda cur: cur.x)
 # view_axes(img, blocks_blue)
-view_axes(img, blocks_red)
+# view_axes(img, blocks_red)
