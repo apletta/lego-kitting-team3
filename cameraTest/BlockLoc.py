@@ -21,7 +21,6 @@ def get_block_locs(img, P):
     SEE Block.py for more info on attributes.
     """
 
-
     # crop image
     img = img[0:420,330:800,:] # BGR
 
@@ -131,3 +130,4 @@ def get_block_locs(img, P):
         blocks_red.append(cur_block)
 
     return blocks_red, blocks_blue
+    
