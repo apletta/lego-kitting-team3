@@ -11,7 +11,7 @@ class LegoBot:
     def __init__(self):
         # Calibration files
         self.AZURE_KINECT_INTRINSICS = 'calib/azure_kinect.intr'
-        self.AZURE_KINECT_EXTRINSICS = 'calib/azure_kinect_overhead_to_world.tf'
+        self.AZURE_KINECT_EXTRINSICS = 'calib/azure_kinect_overhead_to_world_OG.tf'
 
         # See calib/azure_kinect.intr
         fx = 973.626953125
@@ -41,12 +41,12 @@ class LegoBot:
 
         # Initialize franka arm on startup
         self.fa = FrankaArm()
-        self.fa.reset_pose()
-        self.fa.reset_joints()
-        self.fa.open_gripper()
+        self.reset_robot()
+
+        self.MOTION_DURATION = 4 # seconds
 
         # Brick constants, in world frame
-        self.Z_PICKUP = 0.003
+        self.Z_PICKUP = 0.002
         self.Z_INTERMEDIATE = 0.2
 
         # Basket constants, in world frame
@@ -55,6 +55,11 @@ class LegoBot:
         self.Z_BASKET = 0.2
         self.YAW_BASKET_DEG = 0
         print("LegoBot initialized!")
+
+    def reset_robot(self):
+        self.fa.reset_pose()
+        self.fa.reset_joints()
+        self.fa.open_gripper()
 
     def transform_image_to_world(self, px, py):
         # Homogenous image coordinate
@@ -79,7 +84,6 @@ class LegoBot:
         object_center_pose.translation = [brick_x, brick_y, self.Z_PICKUP]
 
         # Modify current yaw rotation to desired yaw
-        # theta = (brick_yaw_deg/180.0)*np.pi
         theta = brick_yaw_rad
         new_rotation = np.array([[np.cos(theta), -np.sin(theta), 0],
                             [-np.sin(theta), -np.cos(theta), 0],
@@ -91,13 +95,17 @@ class LegoBot:
         intermediate_robot_pose.translation = [brick_x, brick_y, self.Z_INTERMEDIATE]
 
         # Move to intermediate pose
-        self.fa.goto_pose(intermediate_robot_pose)
+        self.fa.goto_pose(intermediate_robot_pose, duration=self.MOTION_DURATION)
 
         # Move to object pose
-        self.fa.goto_pose(object_center_pose, duration=5, force_thresholds=[10, 10, 10, 10, 10, 10])
+        self.fa.goto_pose(object_center_pose, duration=self.MOTION_DURATION, force_thresholds=[10, 10, 10, 10, 10, 10])
         
         # Close Gripper
         self.fa.goto_gripper(width=0.045, grasp=True, force=10.0)
+        
+        # Move back up to save intermediate pose
+        self.fa.goto_pose(intermediate_robot_pose, duration=self.MOTION_DURATION)
+
 
     def leggo(self):
         # Get current pose
@@ -114,81 +122,144 @@ class LegoBot:
         basket_pose.rotation = new_rotation
 
         # Move to basket pose
-        self.fa.goto_pose(basket_pose, duration=5, force_thresholds=[10, 10, 10, 10, 10, 10])
+        self.fa.goto_pose(basket_pose, duration=self.MOTION_DURATION, force_thresholds=[10, 10, 10, 10, 10, 10])
         
         # Open Gripper
         self.fa.open_gripper()
 
-    def draw_detections(self, frame, blocks_red, blocks_blue):
+    def draw_detections(self, det_frame, blocks_red, blocks_blue):
         RAD_TO_DEG = 180 / np.pi
 
         for block in blocks_red:
             rect = ((block.x, block.y), (block.length, block.width), block.angle * RAD_TO_DEG)
             box = cv2.boxPoints(rect)  # cv2.boxPoints(rect) for OpenCV 3.x
             box = np.int0(box)
-            cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
+            cv2.drawContours(det_frame, [box], 0, (255, 255, 0), 2)
 
         for block in blocks_blue:
             rect = ((block.x, block.y), (block.length, block.width), block.angle * RAD_TO_DEG)
             box = cv2.boxPoints(rect)  # cv2.boxPoints(rect) for OpenCV 3.x
             box = np.int0(box)
-            cv2.drawContours(frame, [box], 0, (255, 0, 0), 2)
+            cv2.drawContours(det_frame, [box], 0, (0, 255, 0), 2)
+            
+if __name__ == '__main__':
 
-if __name__ == '__main__':    # time.sleep(5.0)
-
-    # move_to_pose(x=0.5, y=0, yaw_deg=0)
+    # Initialize robot
+    print("===========================================================")
     print("Initializing LegoBot...")
     my_eggo = LegoBot()
     print("LegoBot ready!")
     
+    # Load camera parameters
     print("Loaded camera intrinsics and extrinsics...")
     azure_kinect_intrinsics = CameraIntrinsics.load(my_eggo.AZURE_KINECT_INTRINSICS)
     azure_kinect_to_world_transform = RigidTransform.load(my_eggo.AZURE_KINECT_EXTRINSICS)
     print("Loaded camera intrinsics and extrinsics!")
 
-    # Get images
-    print("Getting images...")
-    cv_bridge = CvBridge()
-    azure_kinect_rgb_image = get_azure_kinect_rgb_image(cv_bridge)
-    azure_kinect_depth_image = get_azure_kinect_depth_image(cv_bridge)
-    print("Got images!")
+    # Get user input for number of bricks
+    num_red = input("Enter number of red bricks : ")
+    while not num_red.isnumeric():
+        print("Input must be an integer...")
+        num_red = input("Enter number of red bricks : ")
+    num_red = int(num_red)
 
-    # Get block detections
-    print("Detecting blocks...")
-    frame = azure_kinect_rgb_image[200:850, 500:1300, :3] #cv2.cvtColor(azure_kinect_rgb_image[200:850, 500:1300], cv2.COLOR_BGR2RGB)
-    # img[0:420,330:800,:] # BGR
+    num_blue = input("Enter number of blue bricks: ")
+    while not num_blue.isnumeric():
+        print("Input must be an integer...")
+        num_blue = input("Enter number of blue bricks: ")
+    num_blue = int(num_blue)
 
-    blocks_red, blocks_blue = get_block_locs(frame)
-    my_eggo.draw_detections(frame, blocks_red, blocks_blue)
-    print("Blocks detected!")
+    # Pick up bricks until all are in kit
+    print("---------------------- STARTING KIT ----------------------")
+    got_red = 0
+    got_blue = 0
+    while got_red < num_red or got_blue < num_blue:
+        # Get images
+        print("Getting images...")
+        cv_bridge = CvBridge()
+        azure_kinect_rgb_image = get_azure_kinect_rgb_image(cv_bridge)
+        og_img = azure_kinect_rgb_image.copy()
+        azure_kinect_depth_image = get_azure_kinect_depth_image(cv_bridge)
+        print("Got images!")
 
-    print("RED\n-------")
-    for block in blocks_red:
-        print("{} block: ({},{}); {} x {}; {} rad, {} deg".format(block.color, block.x, block.y, block.length, block.width, block.angle, block.angle*180/np.pi))
-    print("BLUE\n-------")
-    for block in blocks_blue:
-        print("{} block: ({},{}); {} x {}; {} rad, {} deg".format(block.color, block.x,
-              block.y, block.length, block.width, block.angle, block.angle * 180 / np.pi))
+        # Get block detections
+        print("Detecting blocks...")
+        frame = azure_kinect_rgb_image[:,:,:3]
 
-    # Select target block
-    target = blocks_red[0]
-    print(f"Target\nx: {target.x}, y: {target.y}, yaw: {target.angle}")
+        # # Naming a window
+        # cv2.namedWindow("raw", cv2.WINDOW_NORMAL)
+        # cv2.resizeWindow("raw", 500, 400)
+        # cv2.imshow("raw", frame)
+        # cv2.waitKey(0)
 
-    # Transform from camera frame to world frame
-    target_world_frame = get_object_center_point_in_world(int(target.x),
-                                                            int(target.y),
-                                                            azure_kinect_depth_image, azure_kinect_intrinsics,
-                                                            azure_kinect_to_world_transform)  
-    # brick_x, brick_y = my_eggo.transform_image_to_world(target.x, target.y)
-    print(f"Transformed\nx: {target_world_frame[0]}, y: {target_world_frame[1]}, yaw: {target.angle}")
+        blocks_red, blocks_blue = get_block_locs(frame)
+        print("Blocks detected!")
 
-    cv2.imshow('Webcam', frame)
-    cv2.waitKey(0)
+        print("RED\n-------")
+        for block in blocks_red:
+            print("{} block: ({},{}); {} x {}; {} rad, {} deg".format(block.color, block.x, block.y, block.length, block.width, block.angle, block.angle*180/np.pi))
+        print("BLUE\n-------")
+        for block in blocks_blue:
+            print("{} block: ({},{}); {} x {}; {} rad, {} deg".format(block.color, block.x,
+                block.y, block.length, block.width, block.angle, block.angle * 180 / np.pi))
 
-    # Pickup the brick and put in basket
-    print("Grabbing brick...")
-    my_eggo.pickup_brick(target_world_frame[0], target_world_frame[1], brick_yaw_rad=target.angle)
+        my_eggo.draw_detections(og_img, blocks_red, blocks_blue)
+        cv2.namedWindow("detections", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("detections", 800, 700)
+        cv2.imshow("detections", og_img)
+        cv2.waitKey(3000) # Wait for N seconds
 
-    print("Dropping brick...")
-    my_eggo.leggo() # Let go of brick in basket
+        # Select target block
+        grabbing_brick = "blue"
+        if got_red < num_red:
+            if len(blocks_red) == 0:
+                print("\nERROR: No red bricks detected")
+                print("\Retrying...\n")
+                continue
+            else:
+                target = blocks_red[0]
+                got_red += 1 # Assume we are successful
+                grabbing_brick = "red"
+        elif got_blue < num_blue:
+            if len(blocks_blue) == 0:
+                print("\nERROR: No red bricks detected")
+                print("\Retrying...\n")
+                continue
+            else:
+                target = blocks_blue[0]
+                got_blue += 1 # Assume we are successful
+                grabbing_brick = "blue"
+
+        x_off = 70 # offset in pixels
+        y_off = 20 # offset in pixels
+        target.x += x_off
+        target.y += y_off
+
+        print(f"Target\nx: {target.x}, y: {target.y}, yaw: {target.angle}")
+
+        # Transform from camera frame to world frame
+        target_world_frame = get_object_center_point_in_world(int(target.x),
+                                                                int(target.y),
+                                                                azure_kinect_depth_image, azure_kinect_intrinsics,
+                                                                azure_kinect_to_world_transform)  
+        print(f"Transformed\nx: {target_world_frame[0]}, y: {target_world_frame[1]}, yaw: {target.angle}")
+
+        # Pickup the brick and put in basket
+        if grabbing_brick == "red":            
+            print(f"Grabbing {grabbing_brick} brick {got_red}...")
+        else:
+            print(f"Grabbing {grabbing_brick} brick {got_blue}...")
+        my_eggo.pickup_brick(target_world_frame[0], target_world_frame[1], brick_yaw_rad=target.angle - np.pi/2)
+
+        print("Dropping brick...")
+        my_eggo.leggo() # Let go of brick in basket
     
+        # Reset robot for next action
+        print("Resetting robot...")
+        my_eggo.reset_robot()
+        print("Reset robot!")
+        print()
+
+    # Clean up
+    print("---------------------- KIT COMPLETE ----------------------")
+    print("===========================================================")

@@ -3,6 +3,12 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 from Block import *
 
+def valid_block(center, minx=630, maxx=1120, miny=495, maxy=830):
+    if minx < center[0] and center[0] < maxx and miny < center[1] and center[1] < maxy:
+        return True
+    else:
+        return False
+
 def get_block_locs(img):
     """
     THIS FUNCTION TAKES AN IMAGE AND RETURNS BLOCK LOCATIONS AND ORIENTATIONS IN THE camera sensor FRAME, 
@@ -26,9 +32,10 @@ def get_block_locs(img):
     # Normalize image
     img_mag = np.linalg.norm(img, axis=2)
     img_norm = np.zeros(img.shape)
-    for i in range(img.shape[0]):
-        for j in range(img.shape[1]):
-            img_norm[i,j] = img[i,j] / img_mag[i,j]
+    img_norm = img / np.expand_dims(img_mag,2)
+    # for i in range(img.shape[0]):
+    #     for j in range(img.shape[1]):
+    #         img_norm[i,j] = img[i,j] / img_mag[i,j]
 
     # Thresholding and masking
     blue_thresh = 0.8
@@ -90,7 +97,8 @@ def get_block_locs(img):
 
         cur_block = Block(center[0],center[1],length,width,ang,'blue')
 
-        blocks_blue.append(cur_block)
+        if valid_block(center):
+            blocks_blue.append(cur_block)
 
     for i in range(len(contours_red)):
 
@@ -126,6 +134,10 @@ def get_block_locs(img):
 
         cur_block = Block(center[0],center[1],length,width,ang,'red')
 
-        blocks_red.append(cur_block)
+        if valid_block(center):
+            blocks_red.append(cur_block)
+    
+    blocks_blue.sort(key=lambda cur: cur.x)
+    blocks_red.sort(key=lambda cur: cur.x)
 
     return blocks_red, blocks_blue
