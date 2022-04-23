@@ -43,7 +43,7 @@ class LegoBot:
         self.fa = FrankaArm()
         self.reset_robot()
 
-        self.MOTION_DURATION = 4 # seconds
+        self.MOTION_DURATION = 3 # seconds
 
         # Brick constants, in world frame
         self.Z_PICKUP = 0.002
@@ -60,6 +60,11 @@ class LegoBot:
         self.fa.reset_pose()
         self.fa.reset_joints()
         self.fa.open_gripper()
+
+    def reset_joints(self):
+        # self.fa.reset_pose()
+        self.fa.reset_joints()
+        # self.fa.open_gripper()
 
     def transform_image_to_world(self, px, py):
         # Homogenous image coordinate
@@ -254,12 +259,14 @@ if __name__ == '__main__':
         print("Dropping brick...")
         my_eggo.leggo() # Let go of brick in basket
     
-        # Reset robot for next action
-        print("Resetting robot...")
-        my_eggo.reset_robot()
-        print("Reset robot!")
         print()
 
     # Clean up
     print("---------------------- KIT COMPLETE ----------------------")
+    print(f"Got {got_red} Red bricks, {got_blue} Blue bricks!\n")
+    
+    # Reset robot for next action
+    print("Resetting robot...")
+    my_eggo.reset_robot()
+    print("Reset robot!")
     print("===========================================================")
