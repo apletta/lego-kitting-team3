@@ -21,7 +21,7 @@ def get_block_locs(img):
     """
 
     # crop image
-    img = img[0:420,330:800,:] # BGR
+    #img = img[0:420,330:800,:] # BGR
 
     # Normalize image
     img_mag = np.linalg.norm(img, axis=2)

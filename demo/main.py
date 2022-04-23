@@ -119,39 +119,56 @@ class LegoBot:
         # Open Gripper
         self.fa.open_gripper()
 
+    def draw_detections(self, frame, blocks_red, blocks_blue):
+        RAD_TO_DEG = 180 / np.pi
+
+        for block in blocks_red:
+            rect = ((block.x, block.y), (block.length, block.width), block.angle * RAD_TO_DEG)
+            box = cv2.boxPoints(rect)  # cv2.boxPoints(rect) for OpenCV 3.x
+            box = np.int0(box)
+            cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
+
+        for block in blocks_blue:
+            rect = ((block.x, block.y), (block.length, block.width), block.angle * RAD_TO_DEG)
+            box = cv2.boxPoints(rect)  # cv2.boxPoints(rect) for OpenCV 3.x
+            box = np.int0(box)
+            cv2.drawContours(frame, [box], 0, (255, 0, 0), 2)
+
 if __name__ == '__main__':    # time.sleep(5.0)
 
     # move_to_pose(x=0.5, y=0, yaw_deg=0)
     print("Initializing LegoBot...")
     my_eggo = LegoBot()
+    print("LegoBot ready!")
     
-
+    print("Loaded camera intrinsics and extrinsics...")
     azure_kinect_intrinsics = CameraIntrinsics.load(my_eggo.AZURE_KINECT_INTRINSICS)
     azure_kinect_to_world_transform = RigidTransform.load(my_eggo.AZURE_KINECT_EXTRINSICS)
-
-    # print("Loaded camera intrinsics and extrinsics")
+    print("Loaded camera intrinsics and extrinsics!")
 
     # Get images
+    print("Getting images...")
     cv_bridge = CvBridge()
     azure_kinect_rgb_image = get_azure_kinect_rgb_image(cv_bridge)
     azure_kinect_depth_image = get_azure_kinect_depth_image(cv_bridge)
-    # cap = cv2.VideoCapture(0)
-    # ret, frame = cap.read()
-    print("Got images")
+    print("Got images!")
 
     # Get block detections
+    print("Detecting blocks...")
     frame = azure_kinect_rgb_image[200:850, 500:1300, :3] #cv2.cvtColor(azure_kinect_rgb_image[200:850, 500:1300], cv2.COLOR_BGR2RGB)
     # img[0:420,330:800,:] # BGR
 
-    # print(type(frame), frame.shape)
-    cv2.imshow('Webcam',frame)
-    cv2.waitKey(0)
-    cv2.imwrite("one_blue.png", frame)
     blocks_red, blocks_blue = get_block_locs(frame)
+    my_eggo.draw_detections(frame, blocks_red, blocks_blue)
     print("Blocks detected!")
+
     print("RED\n-------")
     for block in blocks_red:
         print("{} block: ({},{}); {} x {}; {} rad, {} deg".format(block.color, block.x, block.y, block.length, block.width, block.angle, block.angle*180/np.pi))
+    print("BLUE\n-------")
+    for block in blocks_blue:
+        print("{} block: ({},{}); {} x {}; {} rad, {} deg".format(block.color, block.x,
+              block.y, block.length, block.width, block.angle, block.angle * 180 / np.pi))
 
     # Select target block
     target = blocks_red[0]
@@ -165,9 +182,13 @@ if __name__ == '__main__':    # time.sleep(5.0)
     # brick_x, brick_y = my_eggo.transform_image_to_world(target.x, target.y)
     print(f"Transformed\nx: {target_world_frame[0]}, y: {target_world_frame[1]}, yaw: {target.angle}")
 
+    cv2.imshow('Webcam', frame)
+    cv2.waitKey(0)
+
     # Pickup the brick and put in basket
     print("Grabbing brick...")
     my_eggo.pickup_brick(target_world_frame[0], target_world_frame[1], brick_yaw_rad=target.angle)
 
     print("Dropping brick...")
     my_eggo.leggo() # Let go of brick in basket
+    
