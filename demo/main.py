@@ -43,7 +43,7 @@ class LegoBot:
         self.fa = FrankaArm()
         self.reset_robot()
 
-        self.MOTION_DURATION = 3 # seconds
+        self.MOTION_DURATION = 4 # seconds
 
         # Brick constants, in world frame
         self.Z_PICKUP = 0.002
